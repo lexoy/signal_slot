@@ -1,4 +1,4 @@
-debug_options = "enable_debug"
+debug_options = "disable_debug"
 
 source = main.cpp
 target = main

@@ -66,5 +66,7 @@ int main()
 		se.si(50, 100);
 	}
 
+	delete uc;
+
 	return 0;
 }
