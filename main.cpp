@@ -22,25 +22,25 @@ auto UserCase::func1(float op1, double op2)->float
 auto UserCase::func2(float op1, double op2)->float
 {
 	cout << "UserCase::func2 called ~" << endl;
-	return .1;
+	return .2;
 }
 
 auto UserCase_::func(float op1, double op2)->float
 {
 	cout << "UserCase_::func called ~" << endl;
-	return .1;
+	return .3;
 }
 
 float globalfunc1(float op1, double op2)
 {
 	cout << "globalfunc1 called ~" << endl;
-	return .1;
+	return .4;
 }
 
 float globalfunc2(float op1, double op2)
 {
 	cout << "globalfunc2 called ~" << endl;
-	return .1;
+	return .5;
 }
 
 struct Sender
@@ -63,7 +63,20 @@ int main()
 		se.si.disconnect(globalfunc1);
 		delete uc_;
 
-		se.si(50, 100);
+		Signal<float, float, double>::Rv_Vector_Set_Sp ret = se.si(50, 100);
+		cout << endl;
+
+		Signal<float, float, double>::Rv_Vector_Set_Sp::const_iterator it = ret.begin();
+		Signal<float, float, double>::Rv_Vector_Set_Sp::const_iterator itEnd = ret.end();
+		while (it != itEnd)
+		{
+			cout << "value = "     << (*it)->value     << endl;
+			cout << "class_ = "    << (*it)->class_    << endl;
+			cout << "function_ = " << (*it)->function_ << endl;
+			cout << endl;
+
+			++it;
+		}
 	}
 
 	delete uc;

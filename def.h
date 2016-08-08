@@ -17,7 +17,9 @@
 
 #pragma once
 
-#include <stdio.h>
+#include <vector>
+#include <memory>   // For shared_ptr
+#include <string>
 #include <list>
 #include <set>
 
@@ -30,11 +32,20 @@ enum connect_result
 	EXCEPTION = 20
 };
 
+template <typename Value_Type>
+struct rv_set
+{
+	Value_Type  value    ;
+	void*       class_   ;
+	void*       function_;
+};
+
 template <typename Return_Type, typename... Tparams>
 class entity_base
 {
 public:
 	virtual Slot*       getdest     (void) const          = 0;
+	virtual void*       getmemfunPtr(void) const          = 0;
 	virtual Return_Type emitSignal  (Tparams const& ...)  = 0;
 	virtual             ~entity_base(void)                   ;
 };
@@ -56,6 +67,7 @@ public:
 public:
 	void        register_entity(function)          ;
 	Slot*       getdest        (void) const        ;
+	void*       getmemfunPtr   (void) const        ;
 	Return_Type emitSignal     (Tparams const& ...);
 
 private:
@@ -76,6 +88,7 @@ public:
 public:
 	void        register_entity(Class_Type*, function);
 	Slot*       getdest        (void) const           ;
+	void*       getmemfunPtr   (void) const           ;
 	Return_Type emitSignal     (Tparams const& ...)   ;
 
 private:
@@ -133,7 +146,9 @@ template <typename Return_Type, typename... Tparams>
 class Signal : public Signal_base<Return_Type, Tparams...>
 {
 public:
-	void operator()(Tparams... params);
+	using Rv_Vector_Set_Sp = std::vector<std::shared_ptr<rv_set<Return_Type>>>;
+
+	Rv_Vector_Set_Sp operator()(Tparams... params);
 
 	template <typename Class_Type>
 	connect_result connect(Class_Type*, Return_Type (Class_Type::*pmemfun)(Tparams...));

@@ -42,17 +42,24 @@ entity<Return_Type (*)(Tparams...)>::~entity(void)
 }
 
 template <typename Return_Type, typename... Tparams>
-void
+inline void
 entity<Return_Type (*)(Tparams...)>::register_entity(function function_)
 {
 	this->function_ = function_;
 }
 
 template <typename Return_Type, typename... Tparams>
-Slot*
+inline Slot*
 entity<Return_Type (*)(Tparams...)>::getdest(void) const
 {
 	return reinterpret_cast<Slot*>(this->function_);
+}
+
+template <typename Return_Type, typename... Tparams>
+inline void*
+entity<Return_Type (*)(Tparams...)>::getmemfunPtr(void) const
+{
+	return nullptr;
 }
 
 template <typename Return_Type, typename... Tparams>
@@ -86,7 +93,7 @@ entity<Return_Type (Class_Type::*)(Tparams...)>::~entity(void)
 }
 
 template <typename Class_Type, typename Return_Type, typename... Tparams>
-void
+inline void
 entity<Return_Type (Class_Type::*)(Tparams...)>::register_entity(Class_Type* class_, function function_)
 {
 	this->class_    = class_;
@@ -94,10 +101,17 @@ entity<Return_Type (Class_Type::*)(Tparams...)>::register_entity(Class_Type* cla
 }
 
 template <typename Class_Type, typename Return_Type, typename... Tparams>
-Slot*
+inline Slot*
 entity<Return_Type (Class_Type::*)(Tparams...)>::getdest(void) const
 {
 	return this->class_;
+}
+
+template <typename Class_Type, typename Return_Type, typename... Tparams>
+inline void*
+entity<Return_Type (Class_Type::*)(Tparams...)>::getmemfunPtr(void) const
+{
+	return reinterpret_cast<void*>(this->function_);
 }
 
 template <typename Class_Type, typename Return_Type, typename... Tparams>
@@ -253,7 +267,7 @@ Signal<Return_Type, Tparams...>::connect(Return_Type (*pfun)(Tparams...))
 }
 
 template <typename Return_Type, typename... Tparams>
-void
+typename Signal<Return_Type, Tparams...>::Rv_Vector_Set_Sp
 Signal<Return_Type, Tparams...>::operator()(Tparams... params)
 {
 	typename std::list<entity_base<Return_Type, Tparams...>*>::const_iterator it
@@ -261,9 +275,14 @@ Signal<Return_Type, Tparams...>::operator()(Tparams... params)
 	typename std::list<entity_base<Return_Type, Tparams...>*>::const_iterator itEnd
                                      = Signal_base<Return_Type, Tparams...>::m_connected_slots.end();
 
+    std::vector<std::shared_ptr<rv_set<Return_Type>>> ret_vals;
 	while (it != itEnd)
 	{
-		(*it)->emitSignal(params...);
+		std::shared_ptr<rv_set<Return_Type>> sp_rvset(new rv_set<Return_Type>);
+		sp_rvset->function_ = (*it)->getmemfunPtr();
+		sp_rvset->class_ = (*it)->getdest();
+		sp_rvset->value = (*it)->emitSignal(params...);
+		ret_vals.push_back(sp_rvset);
 		++it;
 	}
 
@@ -272,7 +291,13 @@ Signal<Return_Type, Tparams...>::operator()(Tparams... params)
 
 	while (it != itEnd)
 	{
-		(*it)->emitSignal(params...);
+		std::shared_ptr<rv_set<Return_Type>> sp_rvset(new rv_set<Return_Type>);
+		sp_rvset->function_ = (*it)->getdest();
+		sp_rvset->class_ = nullptr;
+		sp_rvset->value = (*it)->emitSignal(params...);
+		ret_vals.push_back(sp_rvset);
 		++it;
 	}
+
+	return ret_vals;
 }
